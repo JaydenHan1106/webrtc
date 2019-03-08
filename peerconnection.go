@@ -112,7 +112,9 @@ type PeerConnection struct {
 func NewPeerConnection(configuration Configuration) (*PeerConnection, error) {
 	m := MediaEngine{}
 	m.RegisterDefaultCodecs()
-	api := NewAPI(WithMediaEngine(m))
+	s := SettingEngine{}
+	s.SetNetworkTypes(supportedNetworkTypes)
+	api := NewAPI(WithMediaEngine(m), WithSettingEngine(s))
 	return api.NewPeerConnection(configuration)
 }
 
@@ -231,9 +233,6 @@ func (pc *PeerConnection) initConfiguration(configuration Configuration) error {
 		pc.configuration.ICEServers = configuration.ICEServers
 	}
 
-	if configuration.IgnoreIPv6 {
-		pc.configuration.IgnoreIPv6 = configuration.IgnoreIPv6
-	}
 	return nil
 }
 
@@ -472,7 +471,6 @@ func (pc *PeerConnection) CreateOffer(options *OfferOptions) (SessionDescription
 func (pc *PeerConnection) createICEGatherer() (*ICEGatherer, error) {
 	g, err := pc.api.NewICEGatherer(ICEGatherOptions{
 		ICEServers: pc.configuration.ICEServers,
-		IgnoreIPv6: pc.configuration.IgnoreIPv6,
 	})
 	if err != nil {
 		return nil, err

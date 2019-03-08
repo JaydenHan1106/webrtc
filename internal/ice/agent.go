@@ -120,9 +120,9 @@ type AgentConfig struct {
 	// A keepalive interval of 0 means we never send keepalive packets
 	KeepaliveInterval *time.Duration
 
-	// IgnoreIPv6 is an optional configuration for disabling support for ipv6
-	// server reflexive candidates. Default is false.
-	IgnoreIPv6 bool
+	// CandidateTypes is an optional configuration for disabling or enablding
+	// support for specific network types.
+	NetworkTypes []NetworkType
 }
 
 // NewAgent creates a new Agent
@@ -162,8 +162,8 @@ func NewAgent(config *AgentConfig) (*Agent, error) {
 	}
 
 	// Initialize local candidates
-	a.gatherCandidatesLocal()
-	a.gatherCandidatesReflective(config.Urls, config.IgnoreIPv6)
+	a.gatherCandidatesLocal(config.NetworkTypes)
+	a.gatherCandidatesReflective(config.Urls, config.NetworkTypes)
 
 	go a.taskLoop()
 	return a, nil
@@ -215,8 +215,8 @@ func (a *Agent) listenUDP(network string, laddr *net.UDPAddr) (*net.UDPConn, err
 	return nil, ErrPort
 }
 
-func (a *Agent) gatherCandidatesLocal() {
-	localIPs := localInterfaces()
+func (a *Agent) gatherCandidatesLocal(networkTypes []NetworkType) {
+	localIPs := localInterfaces(networkTypes)
 	for _, ip := range localIPs {
 		for _, network := range supportedNetworks {
 			conn, err := a.listenUDP(network, &net.UDPAddr{IP: ip, Port: 0})
@@ -242,14 +242,8 @@ func (a *Agent) gatherCandidatesLocal() {
 	}
 }
 
-func (a *Agent) gatherCandidatesReflective(urls []*URL, ignoreIPv6 bool) {
-	for _, networkType := range supportedNetworkTypes {
-		if ignoreIPv6 &&
-			networkType == NetworkTypeUDP6 ||
-			networkType == NetworkTypeTCP6 {
-			continue
-		}
-
+func (a *Agent) gatherCandidatesReflective(urls []*URL, networkTypes []NetworkType) {
+	for _, networkType := range networkTypes {
 		network := networkType.String()
 		for _, url := range urls {
 			switch url.Scheme {

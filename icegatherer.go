@@ -17,8 +17,7 @@ type ICEGatherer struct {
 
 	validatedServers []*ice.URL
 
-	agent      *ice.Agent
-	ignoreIPv6 bool
+	agent *ice.Agent
 
 	api *API
 }
@@ -41,7 +40,6 @@ func (api *API) NewICEGatherer(opts ICEGatherOptions) (*ICEGatherer, error) {
 	return &ICEGatherer{
 		state:            ICEGathererStateNew,
 		validatedServers: validatedServers,
-		ignoreIPv6:       opts.IgnoreIPv6,
 		api:              api,
 	}, nil
 }
@@ -59,12 +57,15 @@ func (g *ICEGatherer) Gather() error {
 	defer g.lock.Unlock()
 
 	config := &ice.AgentConfig{
-		IgnoreIPv6:        g.ignoreIPv6,
 		Urls:              g.validatedServers,
 		PortMin:           g.api.settingEngine.ephemeralUDP.PortMin,
 		PortMax:           g.api.settingEngine.ephemeralUDP.PortMax,
 		ConnectionTimeout: g.api.settingEngine.timeout.ICEConnection,
 		KeepaliveInterval: g.api.settingEngine.timeout.ICEKeepalive,
+	}
+
+	for _, typ := range g.api.settingEngine.candidates.ICENetworkTypes {
+		config.NetworkTypes = append(config.NetworkTypes, ice.NetworkType(typ))
 	}
 
 	agent, err := ice.NewAgent(config)

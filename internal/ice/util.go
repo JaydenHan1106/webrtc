@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 )
 
-func localInterfaces() (ips []net.IP) {
+func localInterfaces(networkTypes []NetworkType) (ips []net.IP) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return ips
@@ -38,8 +38,31 @@ func localInterfaces() (ips []net.IP) {
 				continue
 			}
 
+			var IPv4Supported, IPv6Supported bool
+			for _, typ := range networkTypes {
+				if typ.IsIPv4() {
+					IPv4Supported = true
+				}
+
+				if typ.IsIPv6() {
+					IPv6Supported = true
+				}
+			}
+
 			// The conditions of invalidation written below are defined in
 			// https://tools.ietf.org/html/rfc8445#section-5.1.1.1
+			if !IPv4Supported && !IPv6Supported {
+				continue
+			} else if !IPv4Supported && IPv6Supported {
+				if ipv4 := ip.To4(); ipv4 != nil {
+					continue
+				}
+			} else if IPv4Supported && !IPv6Supported {
+				if isSupportedIPv6(ip) {
+					continue
+				}
+			}
+
 			if ipv4 := ip.To4(); ipv4 == nil {
 				if !isSupportedIPv6(ip) {
 					continue

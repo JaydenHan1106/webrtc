@@ -12,11 +12,6 @@ type Configuration struct {
 	// ICE, such as STUN and TURN servers.
 	ICEServers []ICEServer
 
-	// IgnoreIPv6 is an optional configuration for disabling support for ipv6
-	// server reflexive candidates. Default is false.
-	// Deprecated: This is a temporary solution which will be removed soon.
-	IgnoreIPv6 bool
-
 	// ICETransportPolicy indicates which candidates the ICEAgent is allowed
 	// to use.
 	ICETransportPolicy ICETransportPolicy
