@@ -1,3 +1,5 @@
+// +build !js
+
 package webrtc
 
 import (
@@ -113,8 +115,7 @@ func (r *RTPReceiver) ReadRTCP() (rtcp.Packet, error) {
 		return nil, err
 	}
 
-	pkt, _, err := rtcp.Unmarshal(b[:i])
-	return pkt, err
+	return rtcp.Unmarshal(b[:i])
 }
 
 // Stop irreversibly stops the RTPReceiver

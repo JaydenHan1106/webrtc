@@ -1,3 +1,5 @@
+// +build !js
+
 package webrtc
 
 import (
@@ -7,7 +9,6 @@ import (
 
 	"github.com/pions/datachannel"
 	"github.com/pions/webrtc/pkg/rtcerr"
-	"github.com/pkg/errors"
 )
 
 const dataChannelBufferSize = 16384 // Lowest common denominator among browsers
@@ -195,7 +196,7 @@ func (d *DataChannel) open(sctpTransport *SCTPTransport) error {
 func (d *DataChannel) ensureSCTP() error {
 	if d.sctpTransport == nil ||
 		d.sctpTransport.association == nil {
-		return errors.New("SCTP not establisched")
+		return fmt.Errorf("SCTP not establisched")
 	}
 	return nil
 }
@@ -260,15 +261,6 @@ func (d *DataChannel) onClose() (done chan struct{}) {
 	}()
 
 	return
-}
-
-// DataChannelMessage represents a message received from the
-// data channel. IsString will be set to true if the incoming
-// message is of the string type. Otherwise the message is of
-// a binary type.
-type DataChannelMessage struct {
-	IsString bool
-	Data     []byte
 }
 
 // OnMessage sets an event handler which is invoked on a binary
@@ -386,11 +378,11 @@ func (d *DataChannel) Detach() (*datachannel.DataChannel, error) {
 	defer d.mu.Unlock()
 
 	if !d.api.settingEngine.detach.DataChannels {
-		return nil, errors.New("enable detaching by calling webrtc.DetachDataChannels()")
+		return nil, fmt.Errorf("enable detaching by calling webrtc.DetachDataChannels()")
 	}
 
 	if d.dataChannel == nil {
-		return nil, errors.New("datachannel not opened yet, try calling Detach from OnOpen")
+		return nil, fmt.Errorf("datachannel not opened yet, try calling Detach from OnOpen")
 	}
 
 	return d.dataChannel, nil

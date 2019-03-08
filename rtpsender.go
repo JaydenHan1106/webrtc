@@ -1,3 +1,5 @@
+// +build !js
+
 package webrtc
 
 import (
@@ -56,10 +58,9 @@ func (r *RTPSender) Transport() *DTLSTransport {
 func (r *RTPSender) Send(parameters RTPSendParameters) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	select {
-	case <-r.sendCalled:
+
+	if r.hasSent() {
 		return fmt.Errorf("Send has already been called")
-	default:
 	}
 
 	srtcpSession, err := r.transport.getSRTCPSession()
@@ -101,10 +102,8 @@ func (r *RTPSender) Stop() error {
 	}
 	r.track.senders = filtered
 
-	select {
-	case <-r.sendCalled:
+	if r.hasSent() {
 		return r.rtcpReadStream.Close()
-	default:
 	}
 
 	close(r.stopCalled)
@@ -129,8 +128,7 @@ func (r *RTPSender) ReadRTCP() (rtcp.Packet, error) {
 		return nil, err
 	}
 
-	pkt, _, err := rtcp.Unmarshal(b[:i])
-	return pkt, err
+	return rtcp.Unmarshal(b[:i])
 }
 
 // sendRTP should only be called by a track, this only exists so we can keep state in one place
@@ -150,5 +148,15 @@ func (r *RTPSender) sendRTP(b []byte) (int, error) {
 		}
 
 		return writeStream.Write(b)
+	}
+}
+
+// hasSent tells if data has been ever sent for this instance
+func (r *RTPSender) hasSent() bool {
+	select {
+	case <-r.sendCalled:
+		return true
+	default:
+		return false
 	}
 }
