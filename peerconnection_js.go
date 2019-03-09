@@ -103,6 +103,9 @@ func (pc *PeerConnection) OnICEConnectionStateChange(f func(ICEConnectionState))
 func (pc *PeerConnection) SetConfiguration(configuration Configuration) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
+			// TODO(albrow): Convert JavaScript errors to the correct
+			// pions/webrtc errors to match the Go implementation as closely as
+			// possible.
 			err = recoveryToError(e)
 		}
 	}()
@@ -421,9 +424,10 @@ func iceServersToValue(iceServers []ICEServer) js.Value {
 
 func iceServerToValue(server ICEServer) js.Value {
 	return js.ValueOf(map[string]interface{}{
-		"urls":           stringsToValue(server.URLs), // required
-		"username":       stringToValueOrUndefined(server.Username),
-		"credential":     interfaceToValueOrUndefined(server.Credential),
+		"urls":     stringsToValue(server.URLs), // required
+		"username": stringToValueOrUndefined(server.Username),
+		// TODO(albrow): credential is not currently supported.
+		// "credential":     interfaceToValueOrUndefined(server.Credential),
 		"credentialType": stringEnumToValueOrUndefined(server.CredentialType.String()),
 	})
 }

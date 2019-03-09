@@ -22,7 +22,7 @@ script:
   - golangci-lint run ./...
   - rm -rf examples # Remove examples, no test coverage for them
   - go test -coverpkg=$(go list ./... | tr '\n' ',') -coverprofile=cover.out -v -race -covermode=atomic ./...
-  - PATH="$PATH:$(go env GOROOT)/misc/wasm" GOOS=js GOARCH=wasm go test -v .
+  - GOOS=js GOARCH=wasm go test -exec="./go_js_wasm_exec" -v .
   - goveralls -coverprofile=cover.out -service=travis-ci
   - bash .github/assert-contributors.sh
   - bash .github/lint-disallowed-functions-in-library.sh
